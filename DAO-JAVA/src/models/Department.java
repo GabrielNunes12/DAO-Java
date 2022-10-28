@@ -17,10 +17,6 @@ public class Department implements Serializable {
   public Department() {
   }
 
-  public long getSerialVerionUID() {
-    return serialVerionUID;
-  }
-
   public Integer getId() {
     return id;
   }

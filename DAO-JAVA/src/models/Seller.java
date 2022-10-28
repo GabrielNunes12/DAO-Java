@@ -12,6 +12,8 @@ public class Seller implements Serializable {
   private Date birthDate;
   private Double salary;
 
+  private Department department;
+
   public Seller(Integer id, String name, String email, Date birthDate, Double salary) {
     this.id = id;
     this.name = name;
@@ -61,6 +63,14 @@ public class Seller implements Serializable {
 
   public void setSalary(Double salary) {
     this.salary = salary;
+  }
+
+  public Department getDepartment() {
+    return department;
+  }
+
+  public void setDepartment(Department department) {
+    this.department = department;
   }
 
   @Override

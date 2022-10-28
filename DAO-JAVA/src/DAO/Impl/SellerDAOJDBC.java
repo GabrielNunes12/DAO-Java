@@ -11,6 +11,8 @@ import java.util.List;
 
 public class SellerDAOJDBC implements SellerDAO {
   private Connection connection;
+  private static PreparedStatement statement = null;
+  private static ResultSet resultSet = null;
 
   public SellerDAOJDBC(Connection connection) {
     this.connection = connection;
@@ -18,8 +20,6 @@ public class SellerDAOJDBC implements SellerDAO {
 
   @Override
   public void insert(Seller obj) {
-    PreparedStatement statement = null;
-    ResultSet resultSet = null;
     try {
       connection = DB.getConnection();
       statement = connection.prepareStatement("INSERT INTO seller VALUES (?,?,?,?,?,?)");
@@ -45,30 +45,31 @@ public class SellerDAOJDBC implements SellerDAO {
 
   @Override
   public void deleteById(Integer id) {
-
+    try {
+      connection = DB.getConnection();
+      statement = connection.prepareStatement("DELETE FROM seller WHERE Id = ?");
+      statement.setInt(1, id);
+      statement.executeQuery();
+    } catch (SQLException e) {
+      throw new DbException(e.getMessage());
+    } finally {
+      DB.closeConnection();
+      DB.closeStatement(statement);
+    }
   }
 
   @Override
   public Seller findById(Integer id) {
-    PreparedStatement statement = null;
-    ResultSet resultSet = null;
     try {
       connection = DB.getConnection();
       statement = connection.prepareStatement("SELECT seller.*, department.Name as DepName " +
               "FROM seller INNER JOIN department " +
-              "ON seller.DepartmentId = department.Id WHERE seller.Id = ?");
+              "ON seller.DepartmentId = department.Id WHERE seller.Id = ?;");
       statement.setInt(1, id);
       resultSet = statement.executeQuery();
       if(resultSet.next()) {
-        Department department = new Department();
-        Seller seller = new Seller();
-        department.setId(resultSet.getInt("DepartmentId"));
-        department.setName(resultSet.getString("DepName"));
-        seller.setId(resultSet.getInt("Id"));
-        seller.setEmail(resultSet.getString("Email"));
-        seller.setSalary(resultSet.getDouble("BaseSalary"));
-        seller.setBirthDate(resultSet.getDate("BirthDate"));
-        seller.setDepartment(department);
+        Department department = instantiateDepartment(resultSet);
+        Seller seller = instantiateSeller(resultSet,department);
         return seller;
       }
       return null;
@@ -79,6 +80,22 @@ public class SellerDAOJDBC implements SellerDAO {
       DB.closeStatement(statement);
       DB.closeResultSet(resultSet);
     }
+  }
+  private Seller instantiateSeller(ResultSet resultSet, Department department) throws SQLException {
+    Seller seller = new Seller();
+    seller.setId(resultSet.getInt("Id"));
+    seller.setEmail(resultSet.getString("Email"));
+    seller.setSalary(resultSet.getDouble("BaseSalary"));
+    seller.setBirthDate(resultSet.getDate("BirthDate"));
+    seller.setDepartment(department);
+    return seller;
+  }
+
+  private Department instantiateDepartment (ResultSet resultSet) throws SQLException {
+    Department department = new Department();
+    department.setId(resultSet.getInt("DepartmentId"));
+    department.setName(resultSet.getString("DepName"));
+    return department;
   }
 
   @Override

@@ -22,7 +22,6 @@ public class SellerDAOJDBC implements SellerDAO {
   @Override
   public void insert(Seller obj) {
     try {
-      connection = DB.getConnection();
       statement = connection.prepareStatement("INSERT INTO seller VALUES (?,?,?,?,?,?)");
       statement.setInt(1, obj.getId());
       statement.setString(2, obj.getName());
@@ -41,13 +40,26 @@ public class SellerDAOJDBC implements SellerDAO {
 
   @Override
   public void update(Seller obj) {
-
+    try {
+      statement = connection.prepareStatement("UPDATE seller SET id = "
+              + obj.getId() + ", Name =" + obj.getName() + ", Email = "
+              + obj.getEmail() + ", BirthDate = " + obj.getBirthDate()
+              + ", BaseSalary = " + obj.getSalary() + ", DepartmentId = " + obj.getDepartment().getId() +
+              " WHERE id = ?");
+      statement.setInt(1, obj.getId());
+      statement.executeQuery();
+    }catch (SQLException e) {
+      throw new DbException(e.getMessage());
+    } finally {
+      DB.closeConnection();
+      DB.closeResultSet(resultSet);
+      DB.closeStatement(statement);
+    }
   }
 
   @Override
   public void deleteById(Integer id) {
     try {
-      connection = DB.getConnection();
       statement = connection.prepareStatement("DELETE FROM seller WHERE Id = ?");
       statement.setInt(1, id);
       statement.executeQuery();
@@ -62,7 +74,6 @@ public class SellerDAOJDBC implements SellerDAO {
   @Override
   public Seller findById(Integer id) {
     try {
-      connection = DB.getConnection();
       statement = connection.prepareStatement("SELECT seller.*, department.Name as DepName " +
               "FROM seller INNER JOIN department " +
               "ON seller.DepartmentId = department.Id WHERE seller.Id = ?;");
@@ -110,7 +121,6 @@ public class SellerDAOJDBC implements SellerDAO {
   public List<Seller> findAll() {
     List<Seller> sellers = new ArrayList<>();
     try {
-      connection = DB.getConnection();
       statement = connection.prepareStatement("SELECT * FROM seller");
       resultSet = statement.executeQuery();
       while(resultSet.next()) {

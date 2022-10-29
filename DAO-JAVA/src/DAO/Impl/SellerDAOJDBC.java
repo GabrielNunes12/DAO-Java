@@ -7,6 +7,7 @@ import models.Department;
 import models.Seller;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SellerDAOJDBC implements SellerDAO {
@@ -84,6 +85,7 @@ public class SellerDAOJDBC implements SellerDAO {
   private Seller instantiateSeller(ResultSet resultSet, Department department) throws SQLException {
     Seller seller = new Seller();
     seller.setId(resultSet.getInt("Id"));
+    seller.setName(resultSet.getString("Name"));
     seller.setEmail(resultSet.getString("Email"));
     seller.setSalary(resultSet.getDouble("BaseSalary"));
     seller.setBirthDate(resultSet.getDate("BirthDate"));
@@ -98,8 +100,31 @@ public class SellerDAOJDBC implements SellerDAO {
     return department;
   }
 
+  private Department instantiateDepartmentId (ResultSet resultSet) throws SQLException {
+    Department department = new Department();
+    department.setId(resultSet.getInt("DepartmentId"));
+    return department;
+  }
+
   @Override
   public List<Seller> findAll() {
-    return null;
+    List<Seller> sellers = new ArrayList<>();
+    try {
+      connection = DB.getConnection();
+      statement = connection.prepareStatement("SELECT * FROM seller");
+      resultSet = statement.executeQuery();
+      while(resultSet.next()) {
+        Department department = instantiateDepartmentId(resultSet);
+        Seller seller = instantiateSeller(resultSet, department);
+        sellers.add(seller);
+      }
+      return sellers;
+    } catch (SQLException e) {
+      throw new DbException(e.getMessage());
+    } finally {
+      DB.closeConnection();
+      DB.closeStatement(statement);
+      DB.closeResultSet(resultSet);
+    }
   }
 }
